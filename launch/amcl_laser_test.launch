@@ -1,0 +1,10 @@
+<launch>
+    <arg name="prefix" default=""/>
+    <arg name="laser_topic" default="/front/scan"/>
+    <arg name="odom_frame" default="odom"/>
+    <node pkg="amcl_error_test_node" name="amcl_laser_test" type="amcl_laser_test" output="screen">
+        <param name="scan" value="$(eval '/' + prefix + laser_topic if prefix else laser_topic)"/>
+        <param name="odom_frame_id" value="$(eval prefix + '/' + odom_frame if prefix else odom_frame)"/>
+    </node>
+
+</launch>

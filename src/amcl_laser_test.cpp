@@ -7,19 +7,22 @@
 
 class LaserTest {
 public:
-  LaserTest() {
+  LaserTest(ros::NodeHandle nh) {
     std::string scan_topic_;
-    nh_.param<std::string>("scan", scan_topic_, "/front/scan");
+    nh.getParam("scan", scan_topic_);
     std::string odom_frame_id_;
-    nh_.param<std::string>("odom_frame_id", odom_frame_id_, "/odom");
-    
+    nh.getParam("odom_frame_id", odom_frame_id_);
+
+    ROS_INFO("Subscribing to laser scan at %s", scan_topic_.c_str());
+    ROS_INFO("Using odom frame %s", odom_frame_id_.c_str());
+
     tf_.reset(new tf2_ros::Buffer());
     tfl_.reset(new tf2_ros::TransformListener(*tf_));
 
     laser_scan_sub_ = new message_filters::Subscriber<sensor_msgs::LaserScan>(
-        nh_, scan_topic_, 100);
+        nh, scan_topic_, 100);
     laser_scan_filter_ = new tf2_ros::MessageFilter<sensor_msgs::LaserScan>(
-        *laser_scan_sub_, *tf_, odom_frame_id_, 100, nh_);
+        *laser_scan_sub_, *tf_, odom_frame_id_, 100, nh);
 
     laser_scan_filter_->registerCallback(
         boost::bind(&LaserTest::laserReceived, this, _1));
@@ -49,14 +52,17 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tfl_;
 
   std::string target_frame_;
-  ros::NodeHandle nh_;
   message_filters::Subscriber<sensor_msgs::LaserScan> *laser_scan_sub_;
   tf2_ros::MessageFilter<sensor_msgs::LaserScan> *laser_scan_filter_;
 };
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "amcl_laser_test");
-  LaserTest lt;
-  ros::spin();
+  ros::NodeHandle nh("~");
+  ROS_INFO("Starting amcl laser monitor");
+  LaserTest lt(nh);
+  while (ros::ok()) {
+    ros::spinOnce();
+  }
   return 0;
 };
